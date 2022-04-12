@@ -8,6 +8,13 @@
 # Two different types of input:
 #  * single file with -f parameter
 #  * whole directory with -d parameter
+#
+# * PROCESS BREAKDOWN *
+# - get_new_name() creates a new name for the xml file (adding _clean to the end)
+# - process_file() parses the file and calls desc_correction to clean the tei:desc
+# - desc_correction() cleans the XML's tei:desc and returns a cleaned tei:desc
+# - if __name__ == "__main__" initiates the CLI, defines/creates the output directories, runs the
+#   above steps and saves the files
 # -----------------------------------------------------------
 
 import glob, re, sys, getopt, os.path, argparse
@@ -15,19 +22,23 @@ from lxml import etree
 from pathlib import Path
 
 
+# ----- MAIN FUNCTIONS ----- #
 def get_new_name(input_filename, input_dirname):
       """
       function returning the cleaned xml file's new name based on its current name ("_clean"
       is added to the current XML file's name)
-      :param input_filename: name of the file
-      :param input_dirname: name of the directory
+      :param input_filename: name of the processed file
+      :param input_dirname: name of the directory where the file should be saved
       :return: new name to indicate it has been processed
       """
-      if not os.path.exists(input_dirname):
-        os.makedirs(input_dirname)
+      # create "output" directory where to store all results
+      if not os.path.exists("output"):
+          os.makedirs("output")
+      if not os.path.exists(f"output/{input_dirname}"):
+        os.makedirs(f"output/{input_dirname}")
       basename = os.path.basename(input_filename)
-      basename_noExt = os.path.splitext(basename)[0]
-      new_name = input_dirname+"/"+basename_noExt+"_clean.xml"
+      basename_noExt = os.path.splitext(basename)[0]  # return filename without its extension
+      new_name = f"output/{input_dirname}/{basename_noExt}_clean.xml"
       return new_name
 
 
@@ -169,6 +180,7 @@ def desc_correction(input_desc):
     input_desc = re.sub('([a-zA-Z])([0123456789])', r' \1 \2', input_desc)
 
 
+# ----- COMMAND LINE INTERFACE ------ #
 if __name__ == "__main__":
     """
     command line interface to clean an XML file or a whole directory.
@@ -192,7 +204,7 @@ if __name__ == "__main__":
         sys.exit(1)
       #create directory to put the new data
       new_dirname='Data_clean'
-      new_name = get_new_name(args.filename,new_dirname)
+      new_name = get_new_name(args.filename, new_dirname)
       my_doc = process_file(args.filename)
       #save result
       my_doc.write(new_name, encoding='utf-8', xml_declaration=True)
@@ -203,8 +215,9 @@ if __name__ == "__main__":
       if not os.path.isdir(args.dirname):
         print("The Directory does not exit ")
         sys.exit(1)
-      #create directory to put the new data
+      #create directory to put the new data ; clean the "/" that can be at the end of args.dirname
       directory_name = args.dirname
+      directory_name = re.sub(r"/$", "", directory_name)
       new_dirname=directory_name+"_clean"
       #loop over files in directory
       for file in glob.iglob(directory_name+'/*.xml'):
