@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # -----------------------------------------------------------
-# Katabase project: github.com/katabase/
+#  Katabase project: github.com/katabase/
 # Code by: Simon Gabay (simon.gabay[at]unige.ch)
 # Python script cleaning with regex the content of XML files produced with GROBID
 # Two different types of input:
@@ -14,9 +14,15 @@ import glob, re, sys, getopt, os.path, argparse
 from lxml import etree
 from pathlib import Path
 
-def get_new_name(input_filename,input_dirname):
-      # :param input_name: name of the file
-      # :return: new name to indicate it has been processed
+
+def get_new_name(input_filename, input_dirname):
+      """
+      function returning the cleaned xml file's new name based on its current name ("_clean"
+      is added to the current XML file's name)
+      :param input_filename: name of the file
+      :param input_dirname: name of the directory
+      :return: new name to indicate it has been processed
+      """
       if not os.path.exists(input_dirname):
         os.makedirs(input_dirname)
       basename = os.path.basename(input_filename)
@@ -24,9 +30,13 @@ def get_new_name(input_filename,input_dirname):
       new_name = input_dirname+"/"+basename_noExt+"_clean.xml"
       return new_name
 
+
 def process_file(input_file):
-      # :param input_file: xml file
-      # :return: same file with the desc cleaned
+      """
+      parsing the XML document and cleaning it using desc_correction
+      :param input_file: xml file
+      :return: same file with the desc cleaned
+      """
       my_doc = etree.parse(input_file)
       tei = {'tei': 'http://www.tei-c.org/ns/1.0'}
       root = my_doc.getroot()
@@ -35,9 +45,13 @@ def process_file(input_file):
         d.text = desc_correction(d.text)
       return my_doc
 
+
 def desc_correction(input_desc):
-      # :param input_text: content of desc element
-      # :return: same desc cleaned with regex
+    """
+    clean the XML file using regexes
+    :param input_text: content of desc element
+    :return: same desc cleaned with regex
+    """
     #many several spaces to just one.
     #We do not use \s or [ \t] to keep the layout of the file
     input_desc = re.sub('(\w)    (\w)', r'\1 \2', input_desc)
@@ -153,7 +167,13 @@ def desc_correction(input_desc):
     #Cleaning segmentation. Ne pas placer avant in4, in8 etc
     input_desc = re.sub('([0123456789])([a-zA-Z])', r' \1 \2', input_desc)
     input_desc = re.sub('([a-zA-Z])([0123456789])', r' \1 \2', input_desc)
+
+
 if __name__ == "__main__":
+    """
+    command line interface to clean an XML file or a whole directory.
+    the file(s) created will be saved to a new directory
+    """
     #Get value of parameter
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--filename", help="add file name please")
