@@ -17,7 +17,7 @@
 #   above steps and saves the files
 # -----------------------------------------------------------
 
-import glob, re, sys, getopt, os.path, argparse
+import glob, re, sys, getopt, os.path, argparse, traceback
 from lxml import etree
 from pathlib import Path
 
@@ -221,7 +221,14 @@ if __name__ == "__main__":
       new_dirname=directory_name+"_clean"
       #loop over files in directory
       for file in glob.iglob(directory_name+'/*.xml'):
-        new_name = get_new_name(file,new_dirname)
-        my_doc = process_file(file)
-        #save result
-        my_doc.write(new_name, encoding='utf-8', xml_declaration=True)
+        # additional error handling: print out the faulty filename and exit program on error
+        try:
+          new_name = get_new_name(file,new_dirname)
+          my_doc = process_file(file)
+          #save result
+          my_doc.write(new_name, encoding='utf-8', xml_declaration=True)
+        except:
+            error = traceback.format_exc()  # full error message
+            print(f"ERROR ON FILE --- {file}")
+            print(error)
+            sys.exit(1)
